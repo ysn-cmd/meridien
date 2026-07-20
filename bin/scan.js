@@ -10,6 +10,7 @@ const { AppError } = require("../src/errors/AppError");
 // Yeni plugin eklemek = burada register etmek. Çekirdeğe dokunulmaz.
 registry.register(require("../src/plugins/mock"));
 registry.register(require("../src/plugins/nuclei"));
+registry.register(require("../src/plugins/nmap"));
 
 // --- Basit argüman ayrıştırma ---
 function parseArgs(argv) {
