@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-const { classifyTarget, severitySummary, sortBySeverity } = require("./findings");
+const { classifyTarget, severitySummary, sortBySeverity, dedupe } = require("./findings");
 const { assertInScope } = require("./scope");
 const registry = require("./pluginRegistry");
 const { AppError } = require("../errors/AppError");
@@ -49,7 +49,8 @@ async function runScan({ rawTarget, scope, store, createdBy = "cli", pluginNames
     }
   }
 
-  const sorted = sortBySeverity(allFindings);
+  const deduped = dedupe(allFindings);
+  const sorted = sortBySeverity(deduped);
   job.finished_at = new Date().toISOString();
   job.findings_count = sorted.length;
   job.severity_summary = severitySummary(sorted);

@@ -56,6 +56,32 @@ function classifyTarget(raw) {
   return { raw: value, type };
 }
 
+// Bir bulgunun tekillik imzası. Aynı imzaya sahip bulgular "aynı"
+// kabul edilir. evidence dahil edildiği için farklı port/başlık/şablon
+// ayrı kalır; yalnızca birebir aynılar birleşir.
+function fingerprint(f) {
+  const ev = JSON.stringify(f.evidence || {}, Object.keys(f.evidence || {}).sort());
+  return [f.source_tool, f.type, f.severity, f.title, ev].join("|");
+}
+
+// Tekrarlayan bulguları birleştirir. Silmez — temsilciyi tutar ve kaç
+// kez göründüğünü evidence.occurrences alanına yazar (>1 ise).
+function dedupe(findings) {
+  const seen = new Map();
+  for (const f of findings) {
+    const key = fingerprint(f);
+    if (seen.has(key)) {
+      seen.get(key)._count += 1;
+    } else {
+      seen.set(key, { ...f, _count: 1 });
+    }
+  }
+  return [...seen.values()].map(({ _count, ...f }) => {
+    if (_count > 1) f.evidence = { ...f.evidence, occurrences: _count };
+    return f;
+  });
+}
+
 module.exports = {
   SEVERITY,
   SEVERITY_RANK,
@@ -63,4 +89,5 @@ module.exports = {
   severitySummary,
   sortBySeverity,
   classifyTarget,
+  dedupe,
 };
