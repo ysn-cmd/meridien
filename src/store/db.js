@@ -3,7 +3,7 @@ const Database = require("better-sqlite3");
 
 // Basit veri erişim soyutlaması. Doğrudan SQL yalnızca burada bulunur;
 // çekirdek ve plugin'ler bu fonksiyonlar üzerinden erişir.
-function openDb(dbPath = path.join(__dirname, "..", "..", "data", "secscan.db")) {
+function openDb(dbPath = path.join(__dirname, "..", "..", "data", "meridien.db")) {
   const db = new Database(dbPath);
   db.pragma("journal_mode = WAL"); // yazma güvenliği + eşzamanlı okuma
 

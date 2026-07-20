@@ -1,10 +1,10 @@
 {
-  "name": "secscan",
+  "name": "meridien",
   "version": "0.1.0",
   "description": "Otomatik güvenlik tarama ve raporlama platformu — plugin tabanlı çekirdek (Faz 1)",
   "type": "commonjs",
   "bin": {
-    "secscan": "bin/scan.js"
+    "meridien": "bin/scan.js"
   },
   "scripts": {
     "scan": "node bin/scan.js"

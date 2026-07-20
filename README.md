@@ -1,4 +1,4 @@
-# secscan — Faz 1 iskelet
+# meridien — Faz 1 iskelet
 
 Plugin tabanlı otomatik güvenlik tarama platformunun çekirdeği. Uçtan uca
 akış çalışır: kapsam kontrolü → plugin yürütme → normalizasyon → depolama.
