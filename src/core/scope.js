@@ -5,10 +5,13 @@ const { z } = require("zod");
 const { AppError } = require("../errors/AppError");
 
 // Girdi doğrulama şeması (Zod) — Kademe 2.
+// '-' ile başlayan hedefler reddedilir: spawn'a argüman olarak geçtiğinde
+// harici araç (nmap/nuclei/semgrep) onu bayrak sanabilir (argüman enjeksiyonu).
 const targetSchema = z
   .string()
   .min(1, "Hedef boş olamaz")
-  .max(2048, "Hedef çok uzun");
+  .max(2048, "Hedef çok uzun")
+  .refine((v) => !v.trim().startsWith("-"), "Hedef '-' ile başlayamaz");
 
 // scope.yaml biçimi:
 //   allowlist: [ "example.com", "*.example.com", "10.0.0.0/8", "/opt/repos/myapp" ]
@@ -24,18 +27,26 @@ function loadScope(scopePath) {
   };
 }
 
-// Basit desen eşleşmesi: tam eşleşme veya "*.example.com" wildcard son ek eşleşmesi.
-// (IP aralığı / CIDR eşleşmesi Faz 2'de genişletilebilir.)
+// Desen eşleşmesi: tam eşleşme, "*.example.com" wildcard son ek, veya yol
+// tabanlı hedefler için SINIRLI ön ek (kardeş dizin / path traversal atlatmasına
+// karşı). (IP aralığı / CIDR eşleşmesi ileride genişletilebilir.)
 function matches(value, pattern) {
   if (pattern === value) return true;
+
   if (pattern.startsWith("*.")) {
     const suffix = pattern.slice(1); // ".example.com"
     return value.endsWith(suffix);
   }
-  // yol tabanlı hedefler için ön ek eşleşmesi (repo)
-  if (pattern.endsWith("/") || pattern.startsWith("/")) {
-    return value.startsWith(pattern);
+
+  // Yol tabanlı hedefler: gerçek yolları çöz (.. çökertilir) ve SINIR kontrolü
+  // yap — hedef ya tam olarak izinli yol olmalı ya da onun ALTINDA olmalı.
+  // Böylece "/base-evil" ve "/base/../.." gibi atlatmalar reddedilir.
+  if (pattern.startsWith("/") || pattern.endsWith("/")) {
+    const base = path.resolve(pattern);
+    const target = path.resolve(value);
+    return target === base || target.startsWith(base + path.sep);
   }
+
   return false;
 }
 
