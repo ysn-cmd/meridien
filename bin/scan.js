@@ -52,8 +52,9 @@ function printResults({ job, findings, pluginResults }) {
 
   for (const f of findings) {
     const c = COLORS[f.severity] || "";
+    const cve = f.cve ? ` \x1b[45m\x1b[97m ${f.cve} \x1b[0m` : "";
     const times = f.evidence?.occurrences ? ` \x1b[1m×${f.evidence.occurrences}\x1b[0m` : "";
-    console.log(`${c}[${f.severity.toUpperCase()}]${RESET} ${f.title}  (${f.source_tool})${times}`);
+    console.log(`${c}[${f.severity.toUpperCase()}]${RESET} ${f.title}  (${f.source_tool})${cve}${times}`);
     if (f.description) console.log(`   ${f.description}`);
   }
   console.log("");

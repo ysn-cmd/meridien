@@ -43,6 +43,7 @@ function findingCard(f) {
         <span class="sev" style="background:${color}">${esc(f.severity.toUpperCase())}</span>
         <span class="title">${esc(f.title)}</span>
         <span class="src">${esc(f.source_tool)}</span>
+        ${f.cve ? `<span class="cve">${esc(f.cve)}</span>` : ""}
         ${occ ? `<span class="occ">×${occ}</span>` : ""}
       </div>
       ${f.description ? `<div class="desc">${esc(f.description)}</div>` : ""}
@@ -74,6 +75,7 @@ function buildHtml(job, findings) {
   .title { font-weight: 600; font-size: 14px; }
   .src { color: #6b7280; font-size: 12px; font-family: ui-monospace, monospace; }
   .occ { background: #111827; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+  .cve { background: #7c3aed; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; font-family: ui-monospace, monospace; }
   .desc { color: #374151; font-size: 13px; margin-top: 6px; line-height: 1.5; }
   .evidence { background: #f9fafb; border: 1px solid #f0f0f0; border-radius: 4px; padding: 8px 10px; font-size: 11px; margin: 8px 0 0; overflow-x: auto; white-space: pre-wrap; }
   .footer { color: #9ca3af; font-size: 11px; margin-top: 28px; border-top: 1px solid #e5e7eb; padding-top: 10px; }
@@ -108,6 +110,8 @@ async function htmlToPdf(html, outPath) {
   const puppeteer = require("puppeteer");
   const browser = await puppeteer.launch({
     headless: "new",
+    // Sistem chromium'unu kullan (arm64/Kali'de Puppeteer'ın kendi Chromium'u
+    // uyumsuz olabiliyor). Gerekirse CHROME_PATH ile override edilir.
     executablePath: process.env.CHROME_PATH || "/usr/bin/chromium",
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });

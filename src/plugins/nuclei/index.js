@@ -1,5 +1,6 @@
 const { spawn } = require("child_process");
 const { makeFinding } = require("../../core/findings");
+const { extractCveFromNuclei } = require("../../core/cve");
 
 // Gerçek DAST plugin'i. nuclei'yi çalıştırır ve JSONL çıktısını ortak
 // Finding şemasına normalize eder.
@@ -49,6 +50,7 @@ function normalize(rawLine, target) {
     severity: SEV_MAP[(info.severity || "info").toLowerCase()] || "info",
     title: info.name || j["template-id"] || "nuclei bulgusu",
     description: info.description || "",
+    cve: extractCveFromNuclei(j),
     evidence: {
       template: j["template-id"],
       matched_at: j["matched-at"] || j.host,
@@ -86,3 +88,4 @@ const nucleiPlugin = {
 };
 
 module.exports = nucleiPlugin;
+module.exports.normalize = normalize; // test için dışa aç
