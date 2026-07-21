@@ -51,7 +51,35 @@ function findingCard(f) {
     </div>`;
 }
 
-function buildHtml(job, findings) {
+function diffLine(f) {
+  const color = SEV_COLOR[f.severity] || "#6b7280";
+  return `<li>
+    <span class="mini-sev" style="background:${color}">${esc(f.severity.toUpperCase())}</span>
+    ${esc(f.title)}
+    <span class="src">${esc(f.source_tool)}</span>
+    ${f.cve ? `<span class="cve">${esc(f.cve)}</span>` : ""}
+  </li>`;
+}
+
+// Önceki taramaya göre değişiklikler. diff yoksa (ilk tarama) veya boşsa
+// uygun mesajı gösterir.
+function diffSection(diff) {
+  if (!diff) {
+    return `<div class="diff-empty">İlk tarama — karşılaştırılacak önceki tarama yok.</div>`;
+  }
+  const { added = [], removed = [] } = diff;
+  if (!added.length && !removed.length) {
+    return `<div class="diff-empty">Önceki taramaya göre değişiklik yok.</div>`;
+  }
+  return `
+  <div class="diff">
+    <h2>Değişiklikler <span class="diff-counts">+${added.length} yeni · −${removed.length} kapanan</span></h2>
+    ${added.length ? `<div class="diff-group added"><h3>Yeni bulgular (+${added.length})</h3><ul>${added.map(diffLine).join("")}</ul></div>` : ""}
+    ${removed.length ? `<div class="diff-group removed"><h3>Kapanan bulgular (−${removed.length})</h3><ul>${removed.map(diffLine).join("")}</ul></div>` : ""}
+  </div>`;
+}
+
+function buildHtml(job, findings, diff) {
   const summary = job.severity_summary || {};
   const generated = new Date().toLocaleString("tr-TR");
   return `<!DOCTYPE html>
@@ -79,6 +107,19 @@ function buildHtml(job, findings) {
   .desc { color: #374151; font-size: 13px; margin-top: 6px; line-height: 1.5; }
   .evidence { background: #f9fafb; border: 1px solid #f0f0f0; border-radius: 4px; padding: 8px 10px; font-size: 11px; margin: 8px 0 0; overflow-x: auto; white-space: pre-wrap; }
   .footer { color: #9ca3af; font-size: 11px; margin-top: 28px; border-top: 1px solid #e5e7eb; padding-top: 10px; }
+  .diff { border: 1px solid #e5e7eb; border-radius: 6px; padding: 4px 16px 12px; margin-bottom: 24px; background: #fafafa; }
+  .diff h2 { font-size: 15px; margin: 12px 0 8px; }
+  .diff-counts { font-size: 12px; font-weight: 600; color: #6b7280; margin-left: 6px; }
+  .diff-group { margin: 8px 0; }
+  .diff-group h3 { font-size: 12px; margin: 6px 0; text-transform: uppercase; letter-spacing: 0.03em; }
+  .diff-group.added h3 { color: #15803d; }
+  .diff-group.removed h3 { color: #6b7280; }
+  .diff-group ul { list-style: none; padding: 0; margin: 0; }
+  .diff-group li { font-size: 13px; padding: 4px 0 4px 10px; border-left: 3px solid transparent; margin-bottom: 3px; }
+  .diff-group.added li { border-left-color: #22c55e; }
+  .diff-group.removed li { border-left-color: #9ca3af; color: #6b7280; }
+  .mini-sev { color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; margin-right: 4px; }
+  .diff-empty { color: #6b7280; font-size: 13px; font-style: italic; margin-bottom: 24px; }
 </style>
 </head>
 <body>
@@ -96,6 +137,8 @@ function buildHtml(job, findings) {
   </dl>
 
   <div class="badges">${severityBadges(summary) || '<span class="sub">Bulgu yok</span>'}</div>
+
+  ${diffSection(diff)}
 
   ${findings.map(findingCard).join("")}
 
@@ -131,10 +174,10 @@ async function htmlToPdf(html, outPath) {
 
 // Ana giriş: HTML'i her zaman yazar; PDF'i dener, başarısız olursa uyarır
 // ama işi düşürmez.
-async function writeReport(job, findings, { dir = "reports" } = {}) {
+async function writeReport(job, findings, { dir = "reports", diff = null } = {}) {
   fs.mkdirSync(dir, { recursive: true });
   const base = path.join(dir, `report-${job.id}`);
-  const html = buildHtml(job, findings);
+  const html = buildHtml(job, findings, diff);
   const htmlPath = `${base}.html`;
   fs.writeFileSync(htmlPath, html);
 

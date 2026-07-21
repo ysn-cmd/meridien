@@ -3,7 +3,7 @@ const Database = require("better-sqlite3");
 
 // Basit veri erişim soyutlaması. Doğrudan SQL yalnızca burada bulunur;
 // çekirdek ve plugin'ler bu fonksiyonlar üzerinden erişir.
-function openDb(dbPath = path.join(__dirname, "..", "..", "data", "meridien.db")) {
+function openDb(dbPath = path.join(__dirname, "..", "..", "data", "secscan.db")) {
   const db = new Database(dbPath);
   db.pragma("journal_mode = WAL"); // yazma güvenliği + eşzamanlı okuma
 
@@ -84,6 +84,31 @@ function openDb(dbPath = path.join(__dirname, "..", "..", "data", "meridien.db")
 
     getJob(id) {
       return db.prepare("SELECT * FROM scan_jobs WHERE id = ?").get(id);
+    },
+
+    // Aynı hedefin, verilen zamandan ÖNCEKI en son tamamlanmış taraması.
+    // (Mevcut taramanın started_at'ini geç → kendini hariç tutar.)
+    getPreviousJob(target, beforeStartedAt) {
+      return db
+        .prepare(
+          `SELECT * FROM scan_jobs
+           WHERE target = ? AND status = 'completed' AND started_at < ?
+           ORDER BY started_at DESC LIMIT 1`
+        )
+        .get(target, beforeStartedAt);
+    },
+
+    // Bir taramanın bulgularını döner; evidence JSON'u nesneye çözülür
+    // (fingerprint karşılaştırması için gerekli).
+    getFindings(jobId) {
+      const rows = db.prepare("SELECT * FROM findings WHERE job_id = ?").all(jobId);
+      return rows.map((r) => {
+        let evidence = {};
+        try {
+          evidence = JSON.parse(r.evidence || "{}");
+        } catch {}
+        return { ...r, evidence };
+      });
     },
 
     close() {

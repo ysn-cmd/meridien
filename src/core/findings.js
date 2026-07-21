@@ -59,11 +59,14 @@ function classifyTarget(raw) {
 }
 
 // Bir bulgunun tekillik imzası. Aynı imzaya sahip bulgular "aynı"
-// kabul edilir. evidence dahil edildiği için farklı port/başlık/şablon
-// ayrı kalır; yalnızca birebir aynılar birleşir.
+// kabul edilir. occurrences türetilmiş bir sayaçtır, kimliğin parçası
+// değildir — imzadan çıkarılır ki dedup ve diff sayı değişiminden
+// etkilenmesin.
 function fingerprint(f) {
-  const ev = JSON.stringify(f.evidence || {}, Object.keys(f.evidence || {}).sort());
-  return [f.source_tool, f.type, f.severity, f.title, ev].join("|");
+  const ev = { ...(f.evidence || {}) };
+  delete ev.occurrences;
+  const evStr = JSON.stringify(ev, Object.keys(ev).sort());
+  return [f.source_tool, f.type, f.severity, f.title, evStr].join("|");
 }
 
 // Tekrarlayan bulguları birleştirir. Silmez — temsilciyi tutar ve kaç
@@ -92,4 +95,5 @@ module.exports = {
   sortBySeverity,
   classifyTarget,
   dedupe,
+  fingerprint,
 };

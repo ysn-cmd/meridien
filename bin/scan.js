@@ -5,6 +5,7 @@ const { loadScope } = require("../src/core/scope");
 const { openDb } = require("../src/store/db");
 const { runScan } = require("../src/core/orchestrator");
 const { writeReport } = require("../src/reporting/report");
+const { diffFindings } = require("../src/core/diff");
 const { AppError } = require("../src/errors/AppError");
 
 // --- Plugin kayıt (registry) ---
@@ -82,8 +83,16 @@ async function main() {
     printResults(result);
 
     if (args.report) {
+      // Önceki taramayla karşılaştır (aynı hedef). Yoksa diff null kalır.
+      let diff = null;
+      const prev = store.getPreviousJob(result.job.target, result.job.started_at);
+      if (prev) {
+        diff = diffFindings(result.findings, store.getFindings(prev.id));
+        console.log(`Önceki taramaya göre: +${diff.added.length} yeni, −${diff.removed.length} kapanan\n`);
+      }
       const { htmlPath, pdfPath } = await writeReport(result.job, result.findings, {
         dir: args.reportDir,
+        diff,
       });
       console.log(`Rapor (HTML): ${htmlPath}`);
       if (pdfPath) console.log(`Rapor (PDF):  ${pdfPath}`);
