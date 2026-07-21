@@ -15,6 +15,7 @@ function makeFinding({
   evidence = {},
   source_tool,
   cve = null,
+  cwe = null,
 }) {
   if (!SEVERITY.includes(severity)) severity = "info";
   return {
@@ -27,6 +28,7 @@ function makeFinding({
     evidence,        // araca özgü kanıt (port, istek/yanıt, kod satırı ...)
     source_tool,     // bulguyu üreten araç (nuclei, nmap, semgrep ...)
     cve,             // ilişkili CVE kimliği (varsa), ör. "CVE-2023-48795"
+    cwe,             // ilişkili CWE sınıfı (varsa), ör. "CWE-78"
     timestamp: new Date().toISOString(),
   };
 }

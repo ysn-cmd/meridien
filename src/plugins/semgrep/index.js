@@ -1,6 +1,6 @@
 const { spawn } = require("child_process");
 const { makeFinding } = require("../../core/findings");
-const { extractCveFromSemgrep } = require("../../core/cve");
+const { extractCveFromSemgrep, extractCweFromSemgrep } = require("../../core/cve");
 
 // Gerçek SAST plugin'i. semgrep'i bir kod deposu üzerinde çalıştırır ve
 // JSON çıktısını ortak Finding şemasına normalize eder.
@@ -58,6 +58,7 @@ function parseSemgrepJson(jsonStr, target) {
       title: ruleName(r.check_id),
       description: extra.message || "",
       cve: extractCveFromSemgrep(r),
+      cwe: extractCweFromSemgrep(r),
       evidence: {
         check_id: r.check_id,
         file: r.path,

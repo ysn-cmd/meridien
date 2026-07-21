@@ -1,6 +1,7 @@
 // CVE çıkarım ve doğrulama yardımcıları. Tek dosyada toplandı ki
 // bağımsız test edilebilsin ve ileride zenginleştirme (CVSS, NVD referans
 // çekme vb.) buraya eklensin — plugin'lere dağılmasın.
+//cwe de buraya eklendi fix icin meridien/src/core/cve
 
 const CVE_REGEX = /^CVE-\d{4}-\d{4,}$/i;
 
@@ -37,4 +38,28 @@ function extractCveFromSemgrep(result) {
   return null;
 }
 
-module.exports = { CVE_REGEX, isCve, extractCveFromNuclei, extractCveFromSemgrep };
+// --- CWE (zafiyet sınıfı) ---
+// CVE spesifik bir yayınlanmış zafiyettir; CWE ise zafiyetin türüdür
+// (ör. CWE-78 = OS command injection). semgrep bulguları genelde CWE taşır.
+const CWE_REGEX = /CWE-\d+/i;
+
+function normalizeCwe(v) {
+  const s = Array.isArray(v) ? v[0] : v;
+  const m = String(s || "").match(CWE_REGEX);
+  return m ? m[0].toUpperCase() : null;
+}
+
+function extractCweFromSemgrep(result) {
+  const md = (result && result.extra && result.extra.metadata) || {};
+  return normalizeCwe(md.cwe);
+}
+
+module.exports = {
+  CVE_REGEX,
+  CWE_REGEX,
+  isCve,
+  extractCveFromNuclei,
+  extractCveFromSemgrep,
+  normalizeCwe,
+  extractCweFromSemgrep,
+};

@@ -37,6 +37,11 @@ function findingCard(f) {
   const occ = ev.occurrences;
   delete ev.occurrences; // rozet olarak ayrı gösteriyoruz
   const evStr = Object.keys(ev).length ? JSON.stringify(ev, null, 2) : "";
+  // uzun açıklamaları kısalt — rapor okunabilirliği + sayfalama için
+  const desc =
+    f.description && f.description.length > 400
+      ? f.description.slice(0, 400).trimEnd() + "…"
+      : f.description;
   return `
     <div class="finding" style="border-left-color:${color}">
       <div class="finding-head">
@@ -44,9 +49,10 @@ function findingCard(f) {
         <span class="title">${esc(f.title)}</span>
         <span class="src">${esc(f.source_tool)}</span>
         ${f.cve ? `<span class="cve">${esc(f.cve)}</span>` : ""}
+        ${f.cwe ? `<span class="cwe">${esc(f.cwe)}</span>` : ""}
         ${occ ? `<span class="occ">×${occ}</span>` : ""}
       </div>
-      ${f.description ? `<div class="desc">${esc(f.description)}</div>` : ""}
+      ${desc ? `<div class="desc">${esc(desc)}</div>` : ""}
       ${evStr ? `<pre class="evidence">${esc(evStr)}</pre>` : ""}
     </div>`;
 }
@@ -89,21 +95,22 @@ function buildHtml(job, findings, diff) {
 <title>Meridien Raporu — ${esc(job.target)}</title>
 <style>
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: #1f2937; margin: 0; padding: 32px; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: #1f2937; margin: 0; padding: 24px 32px; }
   h1 { font-size: 22px; margin: 0 0 4px; }
-  .sub { color: #6b7280; font-size: 13px; margin-bottom: 20px; }
-  .meta { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; font-size: 13px; margin-bottom: 20px; }
+  .sub { color: #6b7280; font-size: 13px; margin-bottom: 14px; }
+  .meta { display: grid; grid-template-columns: max-content 1fr; gap: 2px 16px; font-size: 13px; margin-bottom: 14px; }
   .meta dt { color: #6b7280; }
   .meta dd { margin: 0; font-family: ui-monospace, monospace; }
-  .badges { margin: 12px 0 24px; }
+  .badges { margin: 8px 0 16px; }
   .badge { display: inline-block; color: #fff; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 4px; margin-right: 6px; }
-  .finding { border: 1px solid #e5e7eb; border-left-width: 4px; border-radius: 6px; padding: 12px 14px; margin-bottom: 10px; page-break-inside: avoid; }
+  .finding { border: 1px solid #e5e7eb; border-left-width: 4px; border-radius: 6px; padding: 10px 14px; margin-bottom: 8px; page-break-inside: avoid; }
   .finding-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .sev { color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; }
   .title { font-weight: 600; font-size: 14px; }
   .src { color: #6b7280; font-size: 12px; font-family: ui-monospace, monospace; }
   .occ { background: #111827; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
   .cve { background: #7c3aed; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; font-family: ui-monospace, monospace; }
+  .cwe { background: #b45309; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; font-family: ui-monospace, monospace; }
   .desc { color: #374151; font-size: 13px; margin-top: 6px; line-height: 1.5; }
   .evidence { background: #f9fafb; border: 1px solid #f0f0f0; border-radius: 4px; padding: 8px 10px; font-size: 11px; margin: 8px 0 0; overflow-x: auto; white-space: pre-wrap; }
   .footer { color: #9ca3af; font-size: 11px; margin-top: 28px; border-top: 1px solid #e5e7eb; padding-top: 10px; }
