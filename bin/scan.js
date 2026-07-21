@@ -87,7 +87,7 @@ async function main() {
     if (args.report) {
       // Önceki taramayla karşılaştır (aynı hedef). Yoksa diff null kalır.
       let diff = null;
-      const prev = store.getPreviousJob(result.job.target, result.job.started_at);
+      const prev = store.getPreviousJob(result.job.target, result.job.started_at, result.job.plugins);
       if (prev) {
         diff = diffFindings(result.findings, store.getFindings(prev.id));
         console.log(`Önceki taramaya göre: +${diff.added.length} yeni, −${diff.removed.length} kapanan\n`);

@@ -57,6 +57,16 @@ function openDb(dbPath = path.join(__dirname, "..", "..", "data", "secscan.db"))
        @source_tool, @timestamp)
   `);
 
+  // DB satırındaki JSON kolonlarını (plugins, severity_summary) nesneye çevirir.
+  function parseJobRow(row) {
+    if (!row) return row;
+    let plugins = [];
+    let severity_summary = {};
+    try { plugins = JSON.parse(row.plugins || "[]"); } catch {}
+    try { severity_summary = JSON.parse(row.severity_summary || "{}"); } catch {}
+    return { ...row, plugins, severity_summary };
+  }
+
   return {
     raw: db,
 
@@ -83,19 +93,34 @@ function openDb(dbPath = path.join(__dirname, "..", "..", "data", "secscan.db"))
     },
 
     getJob(id) {
-      return db.prepare("SELECT * FROM scan_jobs WHERE id = ?").get(id);
+      return parseJobRow(db.prepare("SELECT * FROM scan_jobs WHERE id = ?").get(id));
+    },
+
+    // Tüm tarama işleri, en yeni üstte (dashboard listesi için).
+    listJobs() {
+      return db
+        .prepare("SELECT * FROM scan_jobs ORDER BY started_at DESC")
+        .all()
+        .map(parseJobRow);
     },
 
     // Aynı hedefin, verilen zamandan ÖNCEKI en son tamamlanmış taraması.
-    // (Mevcut taramanın started_at'ini geç → kendini hariç tutar.)
-    getPreviousJob(target, beforeStartedAt) {
-      return db
+    // plugins verilirse, yalnızca AYNI plugin setiyle yapılmış taramayı
+    // seçer (elmayla elmayı kıyaslamak için) — böylece farklı plugin
+    // setleri sahte "yeni/kapanan" gürültüsü üretmez.
+    getPreviousJob(target, beforeStartedAt, plugins) {
+      const rows = db
         .prepare(
           `SELECT * FROM scan_jobs
            WHERE target = ? AND status = 'completed' AND started_at < ?
-           ORDER BY started_at DESC LIMIT 1`
+           ORDER BY started_at DESC`
         )
-        .get(target, beforeStartedAt);
+        .all(target, beforeStartedAt)
+        .map(parseJobRow);
+
+      if (!plugins) return rows[0] || null; // geriye dönük uyumluluk
+      const key = [...plugins].sort().join(",");
+      return rows.find((r) => [...(r.plugins || [])].sort().join(",") === key) || null;
     },
 
     // Bir taramanın bulgularını döner; evidence JSON'u nesneye çözülür
