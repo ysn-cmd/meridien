@@ -28,4 +28,13 @@ function extractCveFromNuclei(j) {
   return null;
 }
 
-module.exports = { CVE_REGEX, isCve, extractCveFromNuclei };
+// semgrep bulgusundan CVE çıkarır (varsa metadata.cve alanında).
+function extractCveFromSemgrep(result) {
+  const md = (result && result.extra && result.extra.metadata) || {};
+  const cve = md.cve;
+  if (Array.isArray(cve) && cve.length && isCve(cve[0])) return String(cve[0]).toUpperCase();
+  if (isCve(cve)) return String(cve).toUpperCase();
+  return null;
+}
+
+module.exports = { CVE_REGEX, isCve, extractCveFromNuclei, extractCveFromSemgrep };
