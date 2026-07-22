@@ -11,7 +11,8 @@
     "serve": "node src/api/server.js",
     "schedule": "node src/scheduler/index.js",
     "dashboard": "npm --prefix frontend run dev",
-    "build-dashboard": "npm --prefix frontend run build"
+    "build-dashboard": "npm --prefix frontend run build",
+    "test": "node --test"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",
