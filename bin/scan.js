@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require("dotenv").config();
 const path = require("path");
 const registry = require("../src/plugins/register");
 const { loadScope } = require("../src/core/scope");
@@ -6,13 +7,14 @@ const { openDb } = require("../src/store/db");
 const { runScan } = require("../src/core/orchestrator");
 const { writeReport } = require("../src/reporting/report");
 const { diffFindings } = require("../src/core/diff");
+const { alertOnNewFindings } = require("../src/alerting/checkAlert");
 const { AppError } = require("../src/errors/AppError");
 
 // Plugin'ler ../src/plugins/register üzerinden kaydedildi (yukarıdaki require).
 
 // --- Basit argüman ayrıştırma ---
 function parseArgs(argv) {
-  const args = { user: "cli", plugins: null, scope: null, report: false, reportDir: "reports" };
+  const args = { user: "cli", plugins: null, scope: null, report: false, reportDir: "reports", alert: false, minSeverity: "medium" };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--target" || a === "-t") args.target = argv[++i];
@@ -21,6 +23,8 @@ function parseArgs(argv) {
     else if (a === "--scope" || a === "-s") args.scope = argv[++i];
     else if (a === "--report" || a === "-r") args.report = true;
     else if (a === "--report-dir") args.reportDir = argv[++i];
+    else if (a === "--alert") args.alert = true;
+    else if (a === "--min-severity") args.minSeverity = argv[++i];
   }
   return args;
 }
@@ -94,6 +98,21 @@ async function main() {
       console.log(`Rapor (HTML): ${htmlPath}`);
       if (pdfPath) console.log(`Rapor (PDF):  ${pdfPath}`);
       console.log("");
+    }
+
+    // --alert: bu hedefe tek seferlik alarmlı tarama (yeni + eşik üstü bulguda e-posta)
+    if (args.alert) {
+      const { added, alertable } = await alertOnNewFindings({
+        job: result.job,
+        findings: result.findings,
+        store,
+        minSeverity: args.minSeverity,
+      });
+      if (alertable.length) {
+        console.log(`Alarm: ${added.length} yeni bulgu, ${alertable.length} tanesi ${args.minSeverity}+ → e-posta gönderildi\n`);
+      } else {
+        console.log(`Alarm: ${added.length} yeni bulgu, ${args.minSeverity}+ eşiğini geçen yok → e-posta gönderilmedi\n`);
+      }
     }
   } catch (err) {
     if (err instanceof AppError) {

@@ -1,15 +1,19 @@
-# Zamanlanmış taramalar. Her iş: hedef + plugin'ler + cron ifadesi.
+# Zamanlanmış taramalar. Her iş: hedef + plugin'ler + cron + alert.
 # Hedeflerin scope.yaml'da izinli olması gerekir.
 # cron formatı: dakika saat gün ay haftanın-günü  (https://crontab.guru)
+# alert: true  → yeni (eşik üstü) bulguda e-posta atar
+# alert: false/eksik → taranır ama e-posta atmaz
 
 alert:
-  min_severity: medium   # medium | high | critical — bu seviye ve üstü yeni bulguda e-posta
+  min_severity: medium   # medium | high | critical — bu seviye ve üstü yeni bulguda alarm
 
 jobs:
   - target: scanme.nmap.org
     plugins: [nmap, nuclei]
     cron: "0 3 * * *"          # her gece 03:00
+    alert: false               # sadece taranır, alarm yok
 
   - target: /home/yasin/test-repo
     plugins: [semgrep]
     cron: "0 */6 * * *"        # 6 saatte bir
+    alert: true                # yeni bulguda e-posta gönder

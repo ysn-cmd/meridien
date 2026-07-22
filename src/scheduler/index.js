@@ -8,9 +8,7 @@ require("../plugins/register"); // plugin'leri kaydet
 const { loadScope } = require("../core/scope");
 const { openDb } = require("../store/db");
 const { runScan } = require("../core/orchestrator");
-const { diffFindings } = require("../core/diff");
-const { SEVERITY_RANK } = require("../core/findings");
-const { notify } = require("../alerting/notifier");
+const { alertOnNewFindings } = require("../alerting/checkAlert");
 
 const SCHEDULE_PATH = process.env.SCHEDULE || path.join(__dirname, "..", "..", "schedule.yaml");
 const SCOPE_PATH = process.env.SCOPE || path.join(__dirname, "..", "..", "scope.yaml");
@@ -40,18 +38,19 @@ async function runJob(job, { scope, store, minSeverity }) {
       pluginNames: job.plugins,
     });
 
-    const prev = store.getPreviousJob(result.job.target, result.job.started_at, result.job.plugins);
-    const diff = prev ? diffFindings(result.findings, store.getFindings(prev.id)) : null;
-    const added = diff ? diff.added : [];
-
-    const min = SEVERITY_RANK[minSeverity] ?? 2;
-    const alertable = added.filter((f) => (SEVERITY_RANK[f.severity] ?? 0) >= min);
-
-    console.log(`  → ${result.findings.length} bulgu, ${added.length} yeni, ${alertable.length} alarmlık (${minSeverity}+)`);
-
-    if (alertable.length) {
-      await notify(result.job, alertable);
-      console.log(`  → ALARM: ${alertable.length} yeni bulgu için e-posta gönderildi`);
+    if (job.alert) {
+      const { added, alertable } = await alertOnNewFindings({
+        job: result.job,
+        findings: result.findings,
+        store,
+        minSeverity,
+      });
+      console.log(`  → ${result.findings.length} bulgu, ${added.length} yeni, ${alertable.length} alarmlık (${minSeverity}+)`);
+      if (alertable.length) {
+        console.log(`  → ALARM: ${alertable.length} yeni bulgu için e-posta gönderildi`);
+      }
+    } else {
+      console.log(`  → ${result.findings.length} bulgu (alarm kapalı)`);
     }
   } catch (e) {
     console.error(`  ✗ hata: ${e.message}`);
