@@ -1,0 +1,12 @@
+# Kapsam tanımı — YALNIZCA açıkça izin verilmiş hedefler taranabilir.
+# Bu dosyada olmayan bir hedef reddedilir (fail-safe).
+
+allowlist:
+  - example.com
+  - "*.example.com"
+  - 127.0.0.1
+  - scanme.nmap.org  # nmap'in resmi izinli test hedefi
+
+
+denylist:
+  - admin.example.com      # allowlist'te olsa bile taranmaz
