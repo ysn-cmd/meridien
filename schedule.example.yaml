@@ -1,0 +1,15 @@
+# Zamanlanmış taramalar. Her iş: hedef + plugin'ler + cron ifadesi.
+# Hedeflerin scope.yaml'da izinli olması gerekir.
+# cron formatı: dakika saat gün ay haftanın-günü  (https://crontab.guru)
+
+alert:
+  min_severity: medium   # medium | high | critical — bu seviye ve üstü yeni bulguda e-posta
+
+jobs:
+  - target: scanme.nmap.org
+    plugins: [nmap, nuclei]
+    cron: "0 3 * * *"          # her gece 03:00
+
+  - target: /home/yasin/test-repo
+    plugins: [semgrep]
+    cron: "0 */6 * * *"        # 6 saatte bir

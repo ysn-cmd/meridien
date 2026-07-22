@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const path = require("path");
-const registry = require("../src/core/pluginRegistry");
+const registry = require("../src/plugins/register");
 const { loadScope } = require("../src/core/scope");
 const { openDb } = require("../src/store/db");
 const { runScan } = require("../src/core/orchestrator");
@@ -8,12 +8,7 @@ const { writeReport } = require("../src/reporting/report");
 const { diffFindings } = require("../src/core/diff");
 const { AppError } = require("../src/errors/AppError");
 
-// --- Plugin kayıt (registry) ---
-// Yeni plugin eklemek = burada register etmek. Çekirdeğe dokunulmaz.
-registry.register(require("../src/plugins/mock"));
-registry.register(require("../src/plugins/nuclei"));
-registry.register(require("../src/plugins/nmap"));
-registry.register(require("../src/plugins/semgrep"));
+// Plugin'ler ../src/plugins/register üzerinden kaydedildi (yukarıdaki require).
 
 // --- Basit argüman ayrıştırma ---
 function parseArgs(argv) {
