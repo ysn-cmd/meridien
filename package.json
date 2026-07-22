@@ -1,13 +1,17 @@
 {
   "name": "meridien",
-  "version": "0.1.0",
-  "description": "Otomatik güvenlik tarama ve raporlama platformu — plugin tabanlı çekirdek (Faz 1)",
+  "version": "1.0.0",
+  "description": "Plugin based automatic security scan and report platform (recon + DAST + SAST)",
   "type": "commonjs",
   "bin": {
     "meridien": "bin/scan.js"
   },
   "scripts": {
-    "scan": "node bin/scan.js"
+    "scan": "node bin/scan.js",
+    "serve": "node src/api/server.js",
+    "schedule": "node src/scheduler/index.js",
+    "dashboard": "npm --prefix frontend run dev",
+    "build-dashboard": "npm --prefix frontend run build"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",
@@ -19,5 +23,24 @@
     "puppeteer": "^25.3.0",
     "yaml": "^2.4.0",
     "zod": "^3.23.0"
-  }
+  },
+  "license": "MIT",
+  "author": "ysn-cmd",
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ysn-cmd/meridien.git"
+  },
+  "keywords": [
+    "security",
+    "scanner",
+    "sast",
+    "dast",
+    "recon",
+    "nuclei",
+    "nmap",
+    "semgrep"
+  ]
 }

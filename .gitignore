@@ -7,3 +7,4 @@ data/*.db-shm
 scope.yaml
 reports
 schedule.yaml
+*.zip
