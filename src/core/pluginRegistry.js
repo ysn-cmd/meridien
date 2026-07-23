@@ -2,6 +2,7 @@ const { AppError } = require("../errors/AppError");
 
 // Plugin sözleşmesi:
 //   name: string
+//   category: string                 // recon | dast | sast | secrets | ...
 //   supports(target): boolean        // target = { raw, type }
 //   run(target): Promise<Finding[]>
 //
@@ -37,4 +38,20 @@ function applicable(target, names = null) {
   });
 }
 
-module.exports = { register, all, applicable };
+// Kayıtlı tüm kategorilerin sıralı, tekil listesi.
+function categories() {
+  const set = new Set();
+  for (const p of all()) {
+    if (p.category) set.add(p.category);
+  }
+  return [...set].sort();
+}
+
+// Bir kategorideki plugin isimleri. Kategori yoksa boş dizi döner.
+function namesByCategory(category) {
+  return all()
+    .filter((p) => p.category === category)
+    .map((p) => p.name);
+}
+
+module.exports = { register, all, applicable, categories, namesByCategory };

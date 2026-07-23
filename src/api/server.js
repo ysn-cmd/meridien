@@ -2,6 +2,7 @@ const path = require("path");
 const express = require("express");
 const { openDb } = require("../store/db");
 const { diffFindings } = require("../core/diff");
+const registry = require("../plugins/register");
 
 // Meridien API sunucusu. SQLite'taki tarama verisini JSON olarak sunar ve
 // statik dashboard'u servis eder. Dashboard aynı origin'den çektiği için
@@ -11,6 +12,20 @@ const app = express();
 const store = openDb();
 
 // --- API ---
+
+// Kayıtlı plugin'ler ve kategorileri. Dashboard'un kategori/plugin
+// seçimini kurabilmesi için read-only liste.
+app.get("/api/plugins", (req, res) => {
+  try {
+    const plugins = registry.all().map((p) => ({
+      name: p.name,
+      category: p.category || null,
+    }));
+    res.json({ categories: registry.categories(), plugins });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // Tüm taramalar (liste) — en yeni üstte
 app.get("/api/scans", (req, res) => {

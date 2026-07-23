@@ -73,6 +73,7 @@ function parseSemgrepJson(jsonStr, target) {
 
 const semgrepPlugin = {
   name: "semgrep",
+  category: "sast",
 
   supports(target) {
     // SAST: kod deposu / dosya yolu hedeflerinde çalışır

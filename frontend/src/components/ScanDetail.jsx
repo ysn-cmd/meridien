@@ -1,4 +1,4 @@
-import { SEVERITIES, SEV_COLOR, SEV_RANK, fmtDate } from "../constants.js";
+import { SEVERITIES, SEV_COLOR, SEV_RANK, fmtDate, CATEGORY_LABEL, groupByCategory } from "../constants.js";
 import FindingCard from "./FindingCard.jsx";
 import DiffSection from "./DiffSection.jsx";
 
@@ -9,9 +9,7 @@ export default function ScanDetail({ data, loading, error }) {
 
   const { job, findings, diff } = data;
   const summary = job.severity_summary || {};
-  const sorted = [...findings].sort(
-    (a, b) => (SEV_RANK[b.severity] ?? 0) - (SEV_RANK[a.severity] ?? 0)
-  );
+  const groups = groupByCategory(findings, SEV_RANK);
 
   return (
     <>
@@ -47,8 +45,16 @@ export default function ScanDetail({ data, loading, error }) {
 
       <DiffSection diff={diff} />
 
-      {sorted.map((f) => (
-        <FindingCard key={f.id} finding={f} />
+      {groups.map(([cat, items]) => (
+        <section key={cat} className="cat-group">
+          <h3 className="cat-head">
+            {CATEGORY_LABEL[cat] || cat}
+            <span className="cat-count">{items.length}</span>
+          </h3>
+          {items.map((f) => (
+            <FindingCard key={f.id} finding={f} />
+          ))}
+        </section>
       ))}
     </>
   );

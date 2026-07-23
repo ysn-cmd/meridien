@@ -100,6 +100,7 @@ function parseNmapXml(xml, target) {
 
 const nmapPlugin = {
   name: "nmap",
+  category: "recon",
 
   supports(target) {
     // recon: domain / ip / url hedeflerinde çalışır (repo/kod hariç)

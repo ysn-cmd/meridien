@@ -16,6 +16,7 @@ function makeFinding({
   source_tool,
   cve = null,
   cwe = null,
+  category = null,
 }) {
   if (!SEVERITY.includes(severity)) severity = "info";
   return {
@@ -29,6 +30,7 @@ function makeFinding({
     source_tool,     // bulguyu üreten araç (nuclei, nmap, semgrep ...)
     cve,             // ilişkili CVE kimliği (varsa), ör. "CVE-2023-48795"
     cwe,             // ilişkili CWE sınıfı (varsa), ör. "CWE-78"
+    category,        // plugin kategorisi (recon | dast | sast | secrets)
     timestamp: new Date().toISOString(),
   };
 }

@@ -14,12 +14,13 @@ const { AppError } = require("../src/errors/AppError");
 
 // --- Basit argüman ayrıştırma ---
 function parseArgs(argv) {
-  const args = { user: "cli", plugins: null, scope: null, report: false, reportDir: "reports", alert: false, minSeverity: "medium" };
+  const args = { user: "cli", plugins: null, categories: null, scope: null, report: false, reportDir: "reports", alert: false, minSeverity: "medium" };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--target" || a === "-t") args.target = argv[++i];
     else if (a === "--user" || a === "-u") args.user = argv[++i];
     else if (a === "--plugins" || a === "-p") args.plugins = argv[++i].split(",");
+    else if (a === "--category" || a === "-c") args.categories = argv[++i].split(",");
     else if (a === "--scope" || a === "-s") args.scope = argv[++i];
     else if (a === "--report" || a === "-r") args.report = true;
     else if (a === "--report-dir") args.reportDir = argv[++i];
@@ -27,6 +28,26 @@ function parseArgs(argv) {
     else if (a === "--min-severity") args.minSeverity = argv[++i];
   }
   return args;
+}
+
+// --category verilince kategori isimlerini plugin isimlerine çevirir ve
+// --plugins ile birleştirir (union). Geçersiz kategori varsa hata fırlatır.
+function resolvePluginNames(args) {
+  if (!args.categories) return args.plugins;
+
+  const valid = registry.categories();
+  const names = new Set(args.plugins || []);
+  for (const cat of args.categories) {
+    const c = cat.trim();
+    if (!valid.includes(c)) {
+      throw new AppError(
+        `Geçersiz kategori: "${c}". Mevcut kategoriler: ${valid.join(", ")}`,
+        400
+      );
+    }
+    for (const n of registry.namesByCategory(c)) names.add(n);
+  }
+  return [...names];
 }
 
 const COLORS = {
@@ -65,7 +86,7 @@ function printResults({ job, findings, pluginResults }) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (!args.target) {
-    console.error("Kullanım: node bin/scan.js --target <hedef> [--user <ad>] [--plugins mock,nuclei] [--scope scope.yaml]");
+    console.error("Kullanım: node bin/scan.js --target <hedef> [--user <ad>] [--plugins mock,nuclei] [--category dast,recon] [--scope scope.yaml]");
     process.exit(1);
   }
 
@@ -74,12 +95,13 @@ async function main() {
   const store = openDb();
 
   try {
+    const pluginNames = resolvePluginNames(args);
     const result = await runScan({
       rawTarget: args.target,
       scope,
       store,
       createdBy: args.user,
-      pluginNames: args.plugins,
+      pluginNames,
     });
     printResults(result);
 

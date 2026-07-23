@@ -41,6 +41,11 @@ async function runScan({ rawTarget, scope, store, createdBy = "cli", pluginNames
   for (const plugin of plugins) {
     try {
       const findings = (await plugin.run(classified)) || [];
+      // Plugin'in kategorisini bulgulara bas (rapor/dashboard gruplaması için).
+      // Plugin kendi finding'inde category vermişse ona dokunma.
+      for (const f of findings) {
+        if (f.category == null) f.category = plugin.category || null;
+      }
       allFindings.push(...findings);
       pluginResults.push({ plugin: plugin.name, ok: true, count: findings.length });
     } catch (err) {

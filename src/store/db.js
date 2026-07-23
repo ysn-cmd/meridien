@@ -31,6 +31,7 @@ function openDb(dbPath = path.join(__dirname, "..", "..", "data", "secscan.db"))
       description TEXT,
       evidence    TEXT,
       source_tool TEXT,
+      category    TEXT,
       timestamp   TEXT,
       FOREIGN KEY (job_id) REFERENCES scan_jobs(id)
     );
@@ -38,6 +39,12 @@ function openDb(dbPath = path.join(__dirname, "..", "..", "data", "secscan.db"))
     CREATE INDEX IF NOT EXISTS idx_findings_job ON findings(job_id);
     CREATE INDEX IF NOT EXISTS idx_findings_sev ON findings(severity);
   `);
+
+  // Migration: eski findings tablosunda category kolonu yoksa ekle.
+  const cols = db.prepare("PRAGMA table_info(findings)").all().map((c) => c.name);
+  if (!cols.includes("category")) {
+    db.exec("ALTER TABLE findings ADD COLUMN category TEXT");
+  }
 
   const insertJob = db.prepare(`
     INSERT INTO scan_jobs
@@ -51,10 +58,10 @@ function openDb(dbPath = path.join(__dirname, "..", "..", "data", "secscan.db"))
   const insertFinding = db.prepare(`
     INSERT INTO findings
       (id, job_id, target, type, severity, title, description, evidence,
-       source_tool, timestamp)
+       source_tool, category, timestamp)
     VALUES
       (@id, @job_id, @target, @type, @severity, @title, @description, @evidence,
-       @source_tool, @timestamp)
+       @source_tool, @category, @timestamp)
   `);
 
   // DB satırındaki JSON kolonlarını (plugins, severity_summary) nesneye çevirir.
@@ -86,6 +93,7 @@ function openDb(dbPath = path.join(__dirname, "..", "..", "data", "secscan.db"))
             ...f,
             job_id: jobId,
             evidence: JSON.stringify(f.evidence || {}),
+            category: f.category ?? null,
           });
         }
       });

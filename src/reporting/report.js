@@ -31,6 +31,51 @@ function severityBadges(summary) {
     .join("");
 }
 
+// Kategori başlık etiketleri (finding.category → görünen ad).
+const CATEGORY_LABEL = {
+  recon: "Keşif (Recon)",
+  dast: "Dinamik Test (DAST)",
+  sast: "Kod Analizi (SAST)",
+  secrets: "Sızan Sırlar (Secrets)",
+  dependency: "Bağımlılık",
+};
+const CATEGORY_ORDER = ["dast", "sast", "secrets", "recon", "dependency"];
+
+// Bulguları kategoriye göre gruplar; her grup kendi içinde severity sıralı.
+function groupByCategory(findings) {
+  const groups = {};
+  for (const f of findings) {
+    const key = f.category || "other";
+    (groups[key] ||= []).push(f);
+  }
+  const ordered = [];
+  const seen = new Set();
+  for (const cat of CATEGORY_ORDER) {
+    if (groups[cat]) { ordered.push([cat, groups[cat]]); seen.add(cat); }
+  }
+  for (const cat of Object.keys(groups)) {
+    if (!seen.has(cat)) ordered.push([cat, groups[cat]]);
+  }
+  return ordered;
+}
+
+function findingsByCategory(findings) {
+  const groups = groupByCategory(findings);
+  return groups
+    .map(([cat, items]) => {
+      const label = CATEGORY_LABEL[cat] || (cat === "other" ? "Diğer" : cat);
+      const sorted = [...items].sort(
+        (a, b) => (SEV_ORDER.indexOf(a.severity)) - (SEV_ORDER.indexOf(b.severity))
+      );
+      return `
+    <div class="cat-group">
+      <h2 class="cat-head">${esc(label)} <span class="cat-count">${items.length}</span></h2>
+      ${sorted.map(findingCard).join("")}
+    </div>`;
+    })
+    .join("");
+}
+
 function findingCard(f) {
   const color = SEV_COLOR[f.severity] || "#6b7280";
   const ev = { ...(f.evidence || {}) };
@@ -113,6 +158,9 @@ function buildHtml(job, findings, diff) {
   .cwe { background: #b45309; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; font-family: ui-monospace, monospace; }
   .desc { color: #374151; font-size: 13px; margin-top: 6px; line-height: 1.5; }
   .evidence { background: #f9fafb; border: 1px solid #f0f0f0; border-radius: 4px; padding: 8px 10px; font-size: 11px; margin: 8px 0 0; overflow-x: auto; white-space: pre-wrap; }
+  .cat-group { margin-bottom: 18px; }
+  .cat-head { font-size: 15px; margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #e5e7eb; color: #111827; }
+  .cat-count { font-size: 12px; font-weight: 600; color: #6b7280; background: #f3f4f6; padding: 2px 9px; border-radius: 10px; margin-left: 6px; }
   .footer { color: #9ca3af; font-size: 11px; margin-top: 28px; border-top: 1px solid #e5e7eb; padding-top: 10px; }
   .diff { border: 1px solid #e5e7eb; border-radius: 6px; padding: 4px 16px 12px; margin-bottom: 24px; background: #fafafa; }
   .diff h2 { font-size: 15px; margin: 12px 0 8px; }
@@ -147,7 +195,7 @@ function buildHtml(job, findings, diff) {
 
   ${diffSection(diff)}
 
-  ${findings.map(findingCard).join("")}
+  ${findingsByCategory(findings)}
 
   <div class="footer">Meridien tarafından üretildi — ${esc(generated)}</div>
 </body>
@@ -198,4 +246,4 @@ async function writeReport(job, findings, { dir = "reports", diff = null } = {})
   return { htmlPath, pdfPath };
 }
 
-module.exports = { buildHtml, writeReport };
+module.exports = { buildHtml, writeReport, groupByCategory };

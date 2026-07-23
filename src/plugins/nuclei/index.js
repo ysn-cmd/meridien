@@ -62,6 +62,7 @@ function normalize(rawLine, target) {
 
 const nucleiPlugin = {
   name: "nuclei",
+  category: "dast",
 
   supports(target) {
     // web hedefleri: url / domain / ip
