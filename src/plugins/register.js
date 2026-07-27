@@ -13,11 +13,15 @@ registry.register(require("./whatweb"));
 registry.register(require("./nuclei"));
 registry.register(require("./nikto"));
 registry.register(require("./wapiti"));
+registry.register(require("./dalfox"));
 
 // SAST
 registry.register(require("./semgrep"));
 
 // Secrets
 registry.register(require("./gitleaks"));
+
+// Dependency
+registry.register(require("./trivy"));
 
 module.exports = registry;

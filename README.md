@@ -9,7 +9,7 @@ schedule and email you when new findings appear.
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-green)
-![Tests](https://img.shields.io/badge/tests-25%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-29%20passing-brightgreen)
 
 ## Architecture
 
@@ -23,11 +23,12 @@ adding a plugin — the rest of the pipeline is untouched.
 
 ## Features
 
-- **Eight scanners across four categories, one contract:**
+- **Ten scanners across five categories, one contract:**
   - **recon** — `nmap` (ports/services), `whatweb` (tech fingerprint)
-  - **dast** — `nuclei` (templates), `nikto` (web server), `wapiti` (active XSS/SQLi)
+  - **dast** — `nuclei` (templates), `nikto` (web server), `wapiti` (active XSS/SQLi), `dalfox` (focused XSS)
   - **sast** — `semgrep` (code analysis)
   - **secrets** — `gitleaks` (leaked credentials)
+  - **dependency** — `trivy` (known CVEs in dependencies)
 
   Every scanner is normalized into a common `Finding` schema.
 - **Category selection** — run every plugin in a category with one flag
@@ -59,8 +60,10 @@ adding a plugin — the rest of the pipeline is untouched.
   | dast | [`nuclei`](https://github.com/projectdiscovery/nuclei) | see project | — |
   | dast | [`nikto`](https://github.com/sullo/nikto) | `apt install nikto` | `NIKTO_PATH` |
   | dast | [`wapiti`](https://wapiti-scanner.github.io) | `apt install wapiti` | `WAPITI_PATH` |
+  | dast | [`dalfox`](https://github.com/hahwul/dalfox) | `go install` | `DALFOX_PATH` |
   | sast | [`semgrep`](https://semgrep.dev) | `pip install semgrep` | `SEMGREP_PATH` |
   | secrets | [`gitleaks`](https://github.com/gitleaks/gitleaks) | `apt install gitleaks` | `GITLEAKS_PATH` |
+  | dependency | [`trivy`](https://github.com/aquasecurity/trivy) | `apt install trivy` | `TRIVY_PATH` |
 
   Only the tools you actually run need to be installed; a plugin whose binary is
   missing fails gracefully without stopping the scan.
@@ -167,7 +170,7 @@ only declares its command, arguments and output parser.
 npm test
 ```
 
-25 unit tests (Node's built-in runner, zero dependencies) cover the schema,
+29 unit tests (Node's built-in runner, zero dependencies) cover the schema,
 deduplication, diff, CVE/CWE extraction, scope enforcement (including the
 path-boundary and argument-injection protections), and the category system
 (registry lookups, finding tagging, report grouping).

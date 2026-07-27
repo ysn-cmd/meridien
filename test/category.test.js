@@ -56,3 +56,50 @@ if (typeof report.groupByCategory === "function") {
     assert.equal(dast[1].severity, "low");
   });
 }
+
+// --- Yeni plugin parse testleri (dalfox, trivy) ---
+const dalfox = require("../src/plugins/dalfox");
+const trivy = require("../src/plugins/trivy");
+const tgt = { raw: "http://x" };
+
+test("dalfox parse: doğrulanmış (V) XSS high'a yükselir, CWE-79", () => {
+  const raw = JSON.stringify([
+    { type: "V", severity: "Medium", param: "q", payload: "<svg onload=alert(1)>", cwe: "CWE-79", method: "GET", data: "http://x?q=..." },
+    {},
+  ]);
+  const out = dalfox.parse(raw, tgt);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].severity, "high");
+  assert.equal(out[0].cwe, "CWE-79");
+  assert.equal(out[0].source_tool, "dalfox");
+});
+
+test("dalfox parse: reflected (R) medium kalır", () => {
+  const raw = JSON.stringify([{ type: "R", severity: "Medium", param: "q", cwe: "CWE-79" }]);
+  const out = dalfox.parse(raw, tgt);
+  assert.equal(out[0].severity, "medium");
+});
+
+test("trivy parse: CVE + severity + CWE eşlemesi", () => {
+  const raw = JSON.stringify({
+    Results: [{
+      Target: "package-lock.json",
+      Vulnerabilities: [
+        { VulnerabilityID: "CVE-2019-10744", PkgName: "lodash", InstalledVersion: "4.17.4", FixedVersion: "4.17.12", Severity: "HIGH", Title: "prototype pollution", CweIDs: ["CWE-1321"] },
+      ],
+    }],
+  });
+  const out = trivy.parse(raw, tgt);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].severity, "high");
+  assert.equal(out[0].cve, "CVE-2019-10744");
+  assert.equal(out[0].cwe, "CWE-1321");
+  assert.equal(out[0].source_tool, "trivy");
+});
+
+test("trivy parse: zafiyet yoksa boş dizi", () => {
+  const raw = JSON.stringify({ Results: [{ Target: "x", Packages: [] }] });
+  assert.deepEqual(trivy.parse(raw, tgt), []);
+});
+
+// --- Yeni plugin parse testleri (dalfox, trivy) ---
