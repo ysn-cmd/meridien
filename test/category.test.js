@@ -122,3 +122,20 @@ test("subfinder parse: JSONL satirlari, host birlestirme, hepsi info", () => {
   const a = out.find((f) => f.title.includes("a.example.com"));
   assert.equal(a.evidence.sources.length, 2); // crtsh + submd birlesti
 });
+
+// --- httpx parse testi ---
+const httpxPlugin = require("../src/plugins/httpx");
+
+test("httpx parse: JSONL, canli host info, failed atlanir", () => {
+  const raw = [
+    '{"url":"https://a.example.com","status_code":200,"title":"A","webserver":"nginx","tech":["nginx","PHP"],"host":"a.example.com","port":"443","scheme":"https","failed":false}',
+    '{"url":"https://dead.example.com","failed":true}',
+    '',
+  ].join("\n");
+  const out = httpxPlugin.parse(raw, { raw: "example.com" });
+  assert.equal(out.length, 1); // failed olan atlandi
+  assert.equal(out[0].severity, "info");
+  assert.equal(out[0].source_tool, "httpx");
+  assert.equal(out[0].evidence.status_code, 200);
+  assert.deepEqual(out[0].evidence.tech, ["nginx", "PHP"]);
+});
