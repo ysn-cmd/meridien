@@ -103,3 +103,22 @@ test("trivy parse: zafiyet yoksa boş dizi", () => {
 });
 
 // --- Yeni plugin parse testleri (dalfox, trivy) ---
+
+// --- subfinder parse testi ---
+const subfinderPlugin = require("../src/plugins/subfinder");
+
+test("subfinder parse: JSONL satirlari, host birlestirme, hepsi info", () => {
+  const raw = [
+    '{"host":"a.example.com","input":"example.com","source":"crtsh"}',
+    '{"host":"a.example.com","input":"example.com","source":"submd"}',
+    '{"host":"b.example.com","input":"example.com","source":"thc"}',
+    '',
+    'bozuk-satir-atlanir',
+  ].join("\n");
+  const out = subfinderPlugin.parse(raw, { raw: "example.com" });
+  assert.equal(out.length, 2); // a ve b, a iki kaynaktan tek finding
+  assert.ok(out.every((f) => f.severity === "info"));
+  assert.ok(out.every((f) => f.source_tool === "subfinder"));
+  const a = out.find((f) => f.title.includes("a.example.com"));
+  assert.equal(a.evidence.sources.length, 2); // crtsh + submd birlesti
+});

@@ -8,6 +8,7 @@ registry.register(require("./mock"));
 // Recon
 registry.register(require("./nmap"));
 registry.register(require("./whatweb"));
+registry.register(require("./subfinder"));
 
 // DAST
 registry.register(require("./nuclei"));

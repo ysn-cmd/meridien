@@ -9,7 +9,7 @@ schedule and email you when new findings appear.
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-green)
-![Tests](https://img.shields.io/badge/tests-29%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-30%20passing-brightgreen)
 
 ## Architecture
 
@@ -23,8 +23,8 @@ adding a plugin — the rest of the pipeline is untouched.
 
 ## Features
 
-- **Ten scanners across five categories, one contract:**
-  - **recon** — `nmap` (ports/services), `whatweb` (tech fingerprint)
+- **Eleven scanners across five categories, one contract:**
+  - **recon** — `nmap` (ports/services), `whatweb` (tech fingerprint), `subfinder` (subdomain discovery)
   - **dast** — `nuclei` (templates), `nikto` (web server), `wapiti` (active XSS/SQLi), `dalfox` (focused XSS)
   - **sast** — `semgrep` (code analysis)
   - **secrets** — `gitleaks` (leaked credentials)
@@ -57,6 +57,7 @@ adding a plugin — the rest of the pipeline is untouched.
   |----------|------|---------|--------------|
   | recon | [`nmap`](https://nmap.org) | `apt install nmap` | — |
   | recon | [`whatweb`](https://github.com/urbanadventurer/WhatWeb) | `apt install whatweb` | `WHATWEB_PATH` |
+  | recon | [`subfinder`](https://github.com/projectdiscovery/subfinder) | `go install` | `SUBFINDER_PATH` |
   | dast | [`nuclei`](https://github.com/projectdiscovery/nuclei) | see project | — |
   | dast | [`nikto`](https://github.com/sullo/nikto) | `apt install nikto` | `NIKTO_PATH` |
   | dast | [`wapiti`](https://wapiti-scanner.github.io) | `apt install wapiti` | `WAPITI_PATH` |
@@ -170,7 +171,7 @@ only declares its command, arguments and output parser.
 npm test
 ```
 
-29 unit tests (Node's built-in runner, zero dependencies) cover the schema,
+30 unit tests (Node's built-in runner, zero dependencies) cover the schema,
 deduplication, diff, CVE/CWE extraction, scope enforcement (including the
 path-boundary and argument-injection protections), and the category system
 (registry lookups, finding tagging, report grouping).
