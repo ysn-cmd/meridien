@@ -25,5 +25,6 @@ registry.register(require("./gitleaks"));
 
 // Dependency
 registry.register(require("./trivy"));
+registry.register(require("./npm-audit"));
 
 module.exports = registry;

@@ -139,3 +139,27 @@ test("httpx parse: JSONL, canli host info, failed atlanir", () => {
   assert.equal(out[0].evidence.status_code, 200);
   assert.deepEqual(out[0].evidence.tech, ["nginx", "PHP"]);
 });
+
+// --- npm-audit parse testi ---
+const npmAuditPlugin = require("../src/plugins/npm-audit");
+
+test("npm-audit parse: via[] her advisory ayri finding, moderate→medium", () => {
+  const raw = JSON.stringify({
+    vulnerabilities: {
+      lodash: {
+        name: "lodash", severity: "critical", isDirect: true, range: "<4.17.21",
+        via: [
+          { title: "Command Injection in lodash", url: "https://github.com/advisories/GHSA-35jh-r3h4-6jhm", severity: "high", cwe: ["CWE-77"], cvss: { score: 7.2 } },
+          { title: "Prototype Pollution in lodash", url: "https://github.com/advisories/GHSA-fvqr-27wr-82fm", severity: "moderate", cwe: ["CWE-1321"], cvss: { score: 6.5 } },
+          "minimist",
+        ],
+      },
+    },
+  });
+  const out = npmAuditPlugin.parse(raw, { raw: "/tmp/x" });
+  assert.equal(out.length, 2); // string via ("minimist") atlandi
+  assert.equal(out[0].severity, "high");
+  assert.equal(out[1].severity, "medium"); // moderate → medium
+  assert.equal(out[1].cwe, "CWE-1321");
+  assert.ok(out.every((f) => f.source_tool === "npm-audit"));
+});
