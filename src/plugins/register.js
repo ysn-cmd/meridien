@@ -16,6 +16,7 @@ registry.register(require("./nuclei"));
 registry.register(require("./nikto"));
 registry.register(require("./wapiti"));
 registry.register(require("./dalfox"));
+registry.register(require("./ffuf"));
 
 // SAST
 registry.register(require("./semgrep"));

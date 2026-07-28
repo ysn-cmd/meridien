@@ -178,3 +178,24 @@ test("zincir: base factory feedsTo alanini plugin objesine tasir", () => {
   const nmap = require("../src/plugins/nmap");
   assert.equal(nmap.feedsTo, null);
 });
+
+// --- ffuf parse testi ---
+const ffufPlugin = require("../src/plugins/ffuf");
+
+test("ffuf parse: hassas path medium, 403 low, siradan info", () => {
+  const raw = JSON.stringify({
+    results: [
+      { input: { FUZZ: ".htpasswd" }, status: 403, url: "http://x/.htpasswd", length: 10, "content-type": "text/html" },
+      { input: { FUZZ: "phpinfo.php" }, status: 200, url: "http://x/phpinfo.php", length: 500 },
+      { input: { FUZZ: ".hta" }, status: 403, url: "http://x/.hta", length: 10 },
+      { input: { FUZZ: "robots.txt" }, status: 200, url: "http://x/robots.txt", length: 20 },
+    ],
+  });
+  const out = ffufPlugin.parse(raw, { raw: "http://x" });
+  assert.equal(out.length, 4);
+  assert.equal(out[0].severity, "medium"); // .htpasswd (hassas)
+  assert.equal(out[1].severity, "medium"); // phpinfo (hassas)
+  assert.equal(out[2].severity, "low");    // .hta 403
+  assert.equal(out[3].severity, "info");   // robots.txt sıradan
+  assert.ok(out.every((f) => f.source_tool === "ffuf"));
+});

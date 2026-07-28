@@ -9,7 +9,7 @@ schedule and email you when new findings appear.
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-green)
-![Tests](https://img.shields.io/badge/tests-32%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-35%20passing-brightgreen)
 
 ## Architecture
 
@@ -23,9 +23,9 @@ adding a plugin — the rest of the pipeline is untouched.
 
 ## Features
 
-- **Thirteen scanners across five categories, one contract:**
+- **Fourteen scanners across five categories, one contract:**
   - **recon** — `nmap` (ports/services), `whatweb` (tech fingerprint), `subfinder` (subdomain discovery), `httpx` (live-host probe)
-  - **dast** — `nuclei` (templates), `nikto` (web server), `wapiti` (active XSS/SQLi), `dalfox` (focused XSS)
+  - **dast** — `nuclei` (templates), `nikto` (web server), `wapiti` (active XSS/SQLi), `dalfox` (focused XSS), `ffuf` (content discovery)
   - **sast** — `semgrep` (code analysis)
   - **secrets** — `gitleaks` (leaked credentials)
   - **dependency** — `trivy` (known CVEs in dependencies), `npm-audit` (npm advisory DB)
@@ -67,6 +67,7 @@ adding a plugin — the rest of the pipeline is untouched.
   | dast | [`nikto`](https://github.com/sullo/nikto) | `apt install nikto` | `NIKTO_PATH` |
   | dast | [`wapiti`](https://wapiti-scanner.github.io) | `apt install wapiti` | `WAPITI_PATH` |
   | dast | [`dalfox`](https://github.com/hahwul/dalfox) | `go install` | `DALFOX_PATH` |
+  | dast | [`ffuf`](https://github.com/ffuf/ffuf) | `apt install ffuf` | `FFUF_PATH` |
   | sast | [`semgrep`](https://semgrep.dev) | `pip install semgrep` | `SEMGREP_PATH` |
   | secrets | [`gitleaks`](https://github.com/gitleaks/gitleaks) | `apt install gitleaks` | `GITLEAKS_PATH` |
   | dependency | [`trivy`](https://github.com/aquasecurity/trivy) | `apt install trivy` | `TRIVY_PATH` |
@@ -177,7 +178,7 @@ only declares its command, arguments and output parser.
 npm test
 ```
 
-32 unit tests (Node's built-in runner, zero dependencies) cover the schema,
+35 unit tests (Node's built-in runner, zero dependencies) cover the schema,
 deduplication, diff, CVE/CWE extraction, scope enforcement (including the
 path-boundary and argument-injection protections), and the category system
 (registry lookups, finding tagging, report grouping).
