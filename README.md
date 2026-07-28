@@ -33,6 +33,10 @@ adding a plugin — the rest of the pipeline is untouched.
   Every scanner is normalized into a common `Finding` schema.
 - **Category selection** — run every plugin in a category with one flag
   (`--category dast`), instead of naming each tool.
+- **Plugin chaining** — discovery plugins can feed their results into another
+  plugin automatically. `subfinder,httpx` together: subfinder's discovered
+  subdomains are scope-checked, then probed by httpx in one pass — a real
+  recon chain, not two separate scans.
 - **Deduplication** — identical findings are collapsed with an occurrence count.
 - **Diff** — each scan is compared against the previous scan of the same target
   *with the same plugin set*, surfacing newly introduced and resolved findings.

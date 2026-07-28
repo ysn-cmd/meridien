@@ -15,12 +15,14 @@ function createProcessPlugin(spec) {
     outputFile = false,
     timeoutMs = 180000,
     okExitCodes = [],
+    feedsTo = null,
   } = spec;
 
   return {
     name,
     category,
     supports,
+    feedsTo,
     async run(target) {
       const bin = (binEnv && process.env[binEnv]) || defaultBin;
       let outFile = null;

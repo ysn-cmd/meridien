@@ -54,6 +54,53 @@ async function runScan({ rawTarget, scope, store, createdBy = "cli", pluginNames
     }
   }
 
+  // --- Plugin zinciri ---
+  // Keşifçi plugin'ler (feedsTo tanımlı) yeni host'lar bulmuş olabilir.
+  // Bunları scope'tan geçirip hedef plugin'e (ör. httpx) liste olarak besle.
+  const selectedNames = new Set(plugins.map((p) => p.name));
+  for (const plugin of plugins) {
+    if (!plugin.feedsTo) continue;
+    const targetPlugin = registry.all().find((p) => p.name === plugin.feedsTo);
+    // Hedef plugin bu taramada seçili değilse ya da liste modu yoksa atla.
+    if (!selectedNames.has(plugin.feedsTo) || !targetPlugin || typeof targetPlugin.runList !== "function") {
+      continue;
+    }
+
+    // Bu keşifçinin ürettiği host'ları topla (evidence.host).
+    const discovered = allFindings
+      .filter((f) => f.source_tool === plugin.name && f.evidence && f.evidence.host)
+      .map((f) => f.evidence.host);
+
+    // Scope filtresi: keşfedilen her host allowlist'e uymalı — dışındakiler atılır.
+    const inScope = [];
+    for (const host of [...new Set(discovered)]) {
+      try {
+        assertInScope(host, scope);
+        inScope.push(host);
+      } catch {
+        // scope dışı keşif — sessizce atla (güvenlik sınırı)
+      }
+    }
+
+    if (inScope.length === 0) continue;
+
+    try {
+      const chainFindings = (await targetPlugin.runList(inScope, { raw: target })) || [];
+      for (const f of chainFindings) {
+        if (f.category == null) f.category = targetPlugin.category || null;
+        // Zincirden geldiğini işaretle (rapor/dashboard için).
+        f.evidence = { ...(f.evidence || {}), zincir: `${plugin.name}→${plugin.feedsTo}` };
+      }
+      allFindings.push(...chainFindings);
+      // pluginResults'ta zincir sonucunu ayrıca göster.
+      const existing = pluginResults.find((r) => r.plugin === plugin.feedsTo);
+      if (existing) existing.count += chainFindings.length;
+      else pluginResults.push({ plugin: `${plugin.feedsTo} (zincir)`, ok: true, count: chainFindings.length });
+    } catch (err) {
+      pluginResults.push({ plugin: `${plugin.feedsTo} (zincir)`, ok: false, error: err.message });
+    }
+  }
+
   const deduped = dedupe(allFindings);
   const sorted = sortBySeverity(deduped);
   job.finished_at = new Date().toISOString();

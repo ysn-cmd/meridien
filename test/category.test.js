@@ -163,3 +163,18 @@ test("npm-audit parse: via[] her advisory ayri finding, moderate→medium", () =
   assert.equal(out[1].cwe, "CWE-1321");
   assert.ok(out.every((f) => f.source_tool === "npm-audit"));
 });
+
+// --- Zincir mekanizması testi ---
+const httpxForChain = require("../src/plugins/httpx");
+const subfinderForChain = require("../src/plugins/subfinder");
+
+test("zincir: subfinder feedsTo httpx, httpx runList mevcut", () => {
+  assert.equal(subfinderForChain.feedsTo, "httpx");
+  assert.equal(typeof httpxForChain.runList, "function");
+});
+
+test("zincir: base factory feedsTo alanini plugin objesine tasir", () => {
+  // nmap gibi feedsTo tanimlamayan plugin null olmali (undefined degil)
+  const nmap = require("../src/plugins/nmap");
+  assert.equal(nmap.feedsTo, null);
+});

@@ -41,6 +41,8 @@ function parse(raw, target) {
 module.exports = createProcessPlugin({
   name: "subfinder",
   category: "recon",
+  // Zincir: keşfettiği subdomain'ler httpx'e beslenebilir.
+  feedsTo: "httpx",
   defaultBin: "subfinder",
   binEnv: "SUBFINDER_PATH",
   // Yalnızca domain hedefi anlamlı (URL/IP'de subdomain keşfi yapılmaz).

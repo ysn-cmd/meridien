@@ -73,4 +73,40 @@ module.exports = createProcessPlugin({
   ],
   parse,
 });
+
+// Zincir modu: bir host listesini tek httpx çalıştırmasında probe eder.
+// Orchestrator, subfinder gibi keşif plugin'lerinin (scope'tan geçmiş)
+// çıktısını buraya besler. Aynı JSONL parse'ı kullanır.
+const { spawn } = require("child_process");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+
+module.exports.runList = async function runList(hosts, { raw }) {
+  if (!Array.isArray(hosts) || hosts.length === 0) return [];
+  const bin = process.env.HTTPX_PATH || "httpx-toolkit";
+  const listFile = path.join(os.tmpdir(), `meridien-httpx-in-${Date.now()}.txt`);
+  const outFile = path.join(os.tmpdir(), `meridien-httpx-out-${Date.now()}.json`);
+  fs.writeFileSync(listFile, hosts.join("\n"));
+
+  const args = ["-l", listFile, "-json", "-silent", "-status-code",
+    "-title", "-tech-detect", "-web-server", "-o", outFile];
+
+  await new Promise((resolve) => {
+    const proc = spawn(bin, args, { stdio: ["ignore", "ignore", "ignore"], detached: true });
+    const timer = setTimeout(() => { try { process.kill(-proc.pid, "SIGKILL"); } catch {} resolve(); }, 300000);
+    proc.on("close", () => { clearTimeout(timer); resolve(); });
+    proc.on("error", () => { clearTimeout(timer); resolve(); });
+  });
+
+  let out = [];
+  try {
+    const rawOut = fs.readFileSync(outFile, "utf8");
+    out = parse(rawOut, { raw });
+  } catch {}
+  try { fs.unlinkSync(listFile); } catch {}
+  try { fs.unlinkSync(outFile); } catch {}
+  return out;
+};
+
 module.exports.parse = parse; // test için
