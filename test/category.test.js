@@ -237,3 +237,35 @@ test("katana parse: JSONL nested, endpoint tekillestirme, riskli path low", () =
   assert.equal(login.severity, "info"); // siradan
   assert.ok(out.every((f) => f.source_tool === "katana"));
 });
+
+// --- sqlmap parse testi ---
+const sqlmapPlugin = require("../src/plugins/sqlmap");
+
+test("sqlmap parse: injection point bloklarini high finding'e cevirir", () => {
+  const raw = `
+sqlmap identified the following injection point(s) with a total of 17 HTTP(s) requests:
+---
+Parameter: id (GET)
+    Type: boolean-based blind
+    Title: AND boolean-based blind - WHERE or HAVING clause
+    Payload: id=1 AND 7933=7933
+
+    Type: UNION query
+    Title: Generic UNION query (NULL) - 2 columns
+    Payload: id=1 UNION ALL SELECT NULL,CHAR(113)-- x
+---
+[10:42:48] [INFO] testing SQLite
+`;
+  const out = sqlmapPlugin.parse(raw, { raw: "http://x/?id=1" });
+  assert.equal(out.length, 1); // tek parametre (id)
+  assert.equal(out[0].severity, "high");
+  assert.equal(out[0].cwe, "CWE-89");
+  assert.equal(out[0].source_tool, "sqlmap");
+  assert.deepEqual(out[0].evidence.teknikler, ["boolean-based blind", "UNION query"]);
+  assert.equal(out[0].evidence.parametre, "id");
+});
+
+test("sqlmap parse: injection yoksa bos dizi", () => {
+  const raw = "[CRITICAL] all tested parameters do not appear to be injectable.";
+  assert.deepEqual(sqlmapPlugin.parse(raw, { raw: "http://x" }), []);
+});

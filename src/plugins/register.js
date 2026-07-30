@@ -19,6 +19,7 @@ registry.register(require("./nikto"));
 registry.register(require("./wapiti"));
 registry.register(require("./dalfox"));
 registry.register(require("./ffuf"));
+registry.register(require("./sqlmap"));
 
 // SAST
 registry.register(require("./semgrep"));
