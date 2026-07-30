@@ -10,6 +10,7 @@ registry.register(require("./nmap"));
 registry.register(require("./whatweb"));
 registry.register(require("./subfinder"));
 registry.register(require("./httpx"));
+registry.register(require("./naabu"));
 
 // DAST
 registry.register(require("./nuclei"));

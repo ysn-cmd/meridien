@@ -199,3 +199,22 @@ test("ffuf parse: hassas path medium, 403 low, siradan info", () => {
   assert.equal(out[3].severity, "info");   // robots.txt sıradan
   assert.ok(out.every((f) => f.source_tool === "ffuf"));
 });
+
+// --- naabu parse testi ---
+const naabuPlugin = require("../src/plugins/naabu");
+
+test("naabu parse: JSONL portlar, dikkat cekici servis low, digeri info", () => {
+  const raw = [
+    '{"host":"x","ip":"1.2.3.4","port":22,"protocol":"tcp","tls":false}',
+    '{"host":"x","ip":"1.2.3.4","port":6379,"protocol":"tcp","tls":false}',
+    '{"host":"x","ip":"1.2.3.4","port":22,"protocol":"tcp","tls":false}',
+    '',
+  ].join("\n");
+  const out = naabuPlugin.parse(raw, { raw: "x" });
+  assert.equal(out.length, 2); // 22 tekrari birlesti
+  const redis = out.find((f) => f.evidence.port === 6379);
+  assert.equal(redis.severity, "low"); // Redis dikkat cekici
+  const ssh = out.find((f) => f.evidence.port === 22);
+  assert.equal(ssh.severity, "info"); // siradan
+  assert.ok(out.every((f) => f.source_tool === "naabu"));
+});
