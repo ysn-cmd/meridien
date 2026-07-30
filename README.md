@@ -197,3 +197,25 @@ production. The authors accept no liability for misuse.
 ## License
 
 [MIT](LICENSE) (c) ysn-cmd
+
+### `--min-severity` (rapor filtresi)
+
+`--min-severity <seviye>` verildiğinde rapor ve CLI çıktısı yalnızca o eşiği
+(dahil) karşılayan bulguları gösterir; eşik altındakiler gizlenir. **Yıkıcı
+değildir** — tüm bulgular veritabanına tam yazılır, diff ve geçmiş etkilenmez.
+Flag verilmezse hiçbir şey gizlenmez (ham rapor).
+
+```bash
+node bin/scan.js --target http://localhost:8080 --category dast --report --min-severity medium
+```
+
+### `--min-severity` (rapor filtresi)
+
+`--min-severity <seviye>` verildiğinde rapor ve CLI çıktısı yalnızca o eşiği
+(dahil) karşılayan bulguları gösterir; eşik altındakiler gizlenir. **Yıkıcı
+değildir** — tüm bulgular veritabanına tam yazılır, diff ve geçmiş etkilenmez.
+Flag verilmezse hiçbir şey gizlenmez (ham rapor).
+
+```bash
+node bin/scan.js --target http://localhost:8080 --category dast --report --min-severity medium
+```

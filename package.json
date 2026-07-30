@@ -12,7 +12,7 @@
     "schedule": "node src/scheduler/index.js",
     "dashboard": "npm --prefix frontend run dev",
     "build-dashboard": "npm --prefix frontend run build",
-    "test": "node --test"
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",

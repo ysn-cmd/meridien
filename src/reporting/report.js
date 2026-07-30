@@ -6,6 +6,24 @@ const path = require("path");
 // yeni plugin eklendiğinde bu dosyaya dokunmak gerekmez.
 
 const SEV_ORDER = ["critical", "high", "medium", "low", "info"];
+
+// Bir severity verilen eşiği (dahil) karşılıyor mu?
+// meetsMinSeverity("medium","medium") → true ; ("info","medium") → false
+function meetsMinSeverity(sev, min) {
+  if (!min) return true;
+  const i = SEV_ORDER.indexOf(sev);
+  const t = SEV_ORDER.indexOf(min);
+  if (i === -1 || t === -1) return true; // tanınmayan → gizleme
+  return i <= t;
+}
+
+// Severity özetini bir Finding[] üzerinden yeniden üretir (rozet + toplam tutarlı kalsın).
+function summarize(findings) {
+  const s = {};
+  for (const f of findings) s[f.severity] = (s[f.severity] || 0) + 1;
+  return s;
+}
+
 const SEV_COLOR = {
   critical: "#b91c1c",
   high: "#dc2626",
@@ -130,9 +148,19 @@ function diffSection(diff) {
   </div>`;
 }
 
-function buildHtml(job, findings, diff) {
-  const summary = job.severity_summary || {};
+function buildHtml(job, findings, diff, minSeverity = null) {
   const generated = new Date().toLocaleString("tr-TR");
+
+  // --min-severity: YIKICI DEĞİL — yalnızca raporda gösterilecekleri süzer.
+  // Tüm bulgular DB'de olduğu gibi durur; diff/geçmiş etkilenmez.
+  const visible = minSeverity
+    ? findings.filter((f) => meetsMinSeverity(f.severity, minSeverity))
+    : findings;
+  const hiddenCount = findings.length - visible.length;
+
+  // Rozet + toplam sayı GÖSTERİLEN bulgulardan üretilir ki liste ile tutarlı olsun.
+  const summary = summarize(visible);
+  const totalShown = visible.length;
   return `<!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -175,6 +203,8 @@ function buildHtml(job, findings, diff) {
   .diff-group.removed li { border-left-color: #9ca3af; color: #6b7280; }
   .mini-sev { color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; margin-right: 4px; }
   .diff-empty { color: #6b7280; font-size: 13px; font-style: italic; margin-bottom: 24px; }
+  .filter-note { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-size: 12px; padding: 8px 12px; border-radius: 6px; margin: 0 0 18px; line-height: 1.5; }
+  .filter-note code { font-family: ui-monospace, monospace; background: #fef3c7; padding: 1px 5px; border-radius: 3px; }
 </style>
 </head>
 <body>
@@ -188,14 +218,15 @@ function buildHtml(job, findings, diff) {
     <dt>Başlatan</dt><dd>${esc(job.created_by || "-")}</dd>
     <dt>Başlangıç</dt><dd>${esc(job.started_at || "-")}</dd>
     <dt>Bitiş</dt><dd>${esc(job.finished_at || "-")}</dd>
-    <dt>Toplam bulgu</dt><dd>${esc(job.findings_count ?? findings.length)}</dd>
+    <dt>Toplam bulgu</dt><dd>${esc(totalShown)}${hiddenCount ? ` <span style="color:#6b7280">(+${hiddenCount} gizlendi)</span>` : ""}</dd>
   </dl>
 
   <div class="badges">${severityBadges(summary) || '<span class="sub">Bulgu yok</span>'}</div>
+  ${minSeverity && hiddenCount ? `<div class="filter-note"><strong>${hiddenCount}</strong> bulgu <code>--min-severity=${esc(minSeverity)}</code> eşiğinin altında kaldığı için raporda gizlendi. Tüm bulgular veritabanında saklı; diff ve geçmiş etkilenmez.</div>` : ""}
 
   ${diffSection(diff)}
 
-  ${findingsByCategory(findings)}
+  ${findingsByCategory(visible)}
 
   <div class="footer">Meridien tarafından üretildi — ${esc(generated)}</div>
 </body>
@@ -229,10 +260,10 @@ async function htmlToPdf(html, outPath) {
 
 // Ana giriş: HTML'i her zaman yazar; PDF'i dener, başarısız olursa uyarır
 // ama işi düşürmez.
-async function writeReport(job, findings, { dir = "reports", diff = null } = {}) {
+async function writeReport(job, findings, { dir = "reports", diff = null, minSeverity = null } = {}) {
   fs.mkdirSync(dir, { recursive: true });
   const base = path.join(dir, `report-${job.id}`);
-  const html = buildHtml(job, findings, diff);
+  const html = buildHtml(job, findings, diff, minSeverity);
   const htmlPath = `${base}.html`;
   fs.writeFileSync(htmlPath, html);
 
@@ -246,4 +277,4 @@ async function writeReport(job, findings, { dir = "reports", diff = null } = {})
   return { htmlPath, pdfPath };
 }
 
-module.exports = { buildHtml, writeReport, groupByCategory };
+module.exports = { buildHtml, writeReport, groupByCategory, meetsMinSeverity, SEV_ORDER };
