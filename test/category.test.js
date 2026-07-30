@@ -218,3 +218,22 @@ test("naabu parse: JSONL portlar, dikkat cekici servis low, digeri info", () => 
   assert.equal(ssh.severity, "info"); // siradan
   assert.ok(out.every((f) => f.source_tool === "naabu"));
 });
+
+// --- katana parse testi ---
+const katanaPlugin = require("../src/plugins/katana");
+
+test("katana parse: JSONL nested, endpoint tekillestirme, riskli path low", () => {
+  const raw = [
+    '{"request":{"method":"GET","endpoint":"http://x/login.php"},"response":{"status_code":200}}',
+    '{"request":{"method":"GET","endpoint":"http://x/login.php"},"response":{"status_code":200}}',
+    '{"request":{"method":"GET","endpoint":"http://x/.git/config"},"response":{"status_code":200}}',
+    '',
+  ].join("\n");
+  const out = katanaPlugin.parse(raw, { raw: "http://x" });
+  assert.equal(out.length, 2); // login.php tekrari birlesti
+  const git = out.find((f) => f.evidence.url.includes(".git"));
+  assert.equal(git.severity, "low"); // .git riskli
+  const login = out.find((f) => f.evidence.url.includes("login.php"));
+  assert.equal(login.severity, "info"); // siradan
+  assert.ok(out.every((f) => f.source_tool === "katana"));
+});

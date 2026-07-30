@@ -11,6 +11,7 @@ registry.register(require("./whatweb"));
 registry.register(require("./subfinder"));
 registry.register(require("./httpx"));
 registry.register(require("./naabu"));
+registry.register(require("./katana"));
 
 // DAST
 registry.register(require("./nuclei"));
